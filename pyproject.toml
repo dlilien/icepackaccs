@@ -1,0 +1,16 @@
+[project]
+name = "icepackaccs"
+version = "0.0.1"
+description = "auxiliary scripts for glacier flow modeling"
+authors = [
+    {name = "David Lilien", email = "dlilien@iu.edu"}
+]
+license = {text = "LICENSE"}
+requires-python = ">=3.8"
+dependencies = [
+    "icepack",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
