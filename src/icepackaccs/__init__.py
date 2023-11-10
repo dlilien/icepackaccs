@@ -11,3 +11,4 @@
 
 from .stress import threed_stress, principal_stress
 from .reprojection import extract_bed, extract_surface, interpolate2d3d
+from .friction import regularized_coulomb
