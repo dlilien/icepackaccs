@@ -16,16 +16,12 @@ def extract_surface(q_in):
     mesh_x = q_in.ufl_domain()._base_mesh
     shape = q_in.ufl_shape
     if len(shape) == 0:
-        VLin = firedrake.FunctionSpace(
-            q_in.ufl_domain(), "CG", 2, vfamily="CG", vdegree=1
-        )
+        VLin = firedrake.FunctionSpace(q_in.ufl_domain(), "CG", 2, vfamily="CG", vdegree=1)
         q_targ = firedrake.interpolate(q_in, VLin)
         element_xz = q_targ.ufl_element()
         element_x = element_xz.sub_elements()[0]
     else:
-        VLin = firedrake.VectorFunctionSpace(
-            q_in.ufl_domain(), "CG", 2, dim=shape[0], vfamily="CG", vdegree=1
-        )
+        VLin = firedrake.VectorFunctionSpace(q_in.ufl_domain(), "CG", 2, dim=shape[0], vfamily="CG", vdegree=1)
         q_targ = firedrake.interpolate(q_in, VLin)
         element_xz = q_targ.ufl_element()
         element_xy = element_xz.sub_elements()[0].sub_elements()[0]
@@ -44,16 +40,12 @@ def extract_bed(q_in):
     mesh_x = q_in.ufl_domain()._base_mesh
     shape = q_in.ufl_shape
     if len(shape) == 0:
-        VLin = firedrake.FunctionSpace(
-            q_in.ufl_domain(), "CG", 2, vfamily="CG", vdegree=1
-        )
+        VLin = firedrake.FunctionSpace(q_in.ufl_domain(), "CG", 2, vfamily="CG", vdegree=1)
         q_targ = firedrake.interpolate(q_in, VLin)
         element_xz = q_targ.ufl_element()
         element_x = element_xz.sub_elements()[0]
     else:
-        VLin = firedrake.VectorFunctionSpace(
-            q_in.ufl_domain(), "CG", 2, dim=shape[0], vfamily="CG", vdegree=1
-        )
+        VLin = firedrake.VectorFunctionSpace(q_in.ufl_domain(), "CG", 2, dim=shape[0], vfamily="CG", vdegree=1)
         q_targ = firedrake.interpolate(q_in, VLin)
         element_xz = q_targ.ufl_element()
         element_xy = element_xz.sub_elements()[0].sub_elements()[0]
@@ -81,7 +73,7 @@ def interpolate2d3d(u, mesh):
         The 3d mesh on which to interpolate.
     """
     element = u.ufl_element()
-    V = firedrake.FunctionSpace(mesh, family=element.family(), degree=element.degree(), vfamily='R', vdegree=0)
+    V = firedrake.FunctionSpace(mesh, family=element.family(), degree=element.degree(), vfamily="R", vdegree=0)
     u3 = firedrake.Function(V)
     u3.dat.data[:] = u.dat.data_ro[:]
     return u3
