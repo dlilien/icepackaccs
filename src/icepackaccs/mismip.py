@@ -17,7 +17,10 @@ a = Constant(0.3)
 
 
 def mismip_bed_topography(mesh):
-    x, y = SpatialCoordinate(mesh)
+    if mesh.cell_dimension() == 2:
+        x, y = firedrake.SpatialCoordinate(mesh)
+    else:
+        x, y, z = firedrake.SpatialCoordinate(mesh)
 
     x_c = Constant(300e3)
     X = x / x_c
