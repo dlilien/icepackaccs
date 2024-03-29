@@ -17,9 +17,9 @@ a = Constant(0.3)
 
 
 def mismip_bed_topography(mesh):
-    try:
+    if mesh.cell_dimension() == 2:
         x, y = SpatialCoordinate(mesh)
-    except ValueError:
+    else:
         x, y, z = SpatialCoordinate(mesh)
 
     x_c = Constant(300e3)
