@@ -17,7 +17,10 @@ a = Constant(0.3)
 
 
 def mismip_bed_topography(mesh):
-    x, y = SpatialCoordinate(mesh)
+    try:
+        x, y = SpatialCoordinate(mesh)
+    except ValueError:
+        x, y, z = SpatialCoordinate(mesh)
 
     x_c = Constant(300e3)
     X = x / x_c

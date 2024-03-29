@@ -10,6 +10,7 @@
 
 """
 import firedrake
+from firedrake.__future__ import interpolate
 
 
 def extract_surface(q_in):
@@ -17,12 +18,12 @@ def extract_surface(q_in):
     shape = q_in.ufl_shape
     if len(shape) == 0:
         VLin = firedrake.FunctionSpace(q_in.ufl_domain(), "CG", 2, vfamily="CG", vdegree=1)
-        q_targ = firedrake.interpolate(q_in, VLin)
+        q_targ = firedrake.assemble(interpolate(q_in, VLin))
         element_xz = q_targ.ufl_element()
-        element_x = element_xz.sub_elements()[0]
+        element_x = element_xz.sub_elements[0]
     else:
         VLin = firedrake.VectorFunctionSpace(q_in.ufl_domain(), "CG", 2, dim=shape[0], vfamily="CG", vdegree=1)
-        q_targ = firedrake.interpolate(q_in, VLin)
+        q_targ = firedrake.assemble(interpolate(q_in, VLin))
         element_xz = q_targ.ufl_element()
         element_xy = element_xz.sub_elements()[0].sub_elements()[0]
         element_x = firedrake.VectorElement(element_xy, dim=shape[0])
@@ -41,12 +42,12 @@ def extract_bed(q_in):
     shape = q_in.ufl_shape
     if len(shape) == 0:
         VLin = firedrake.FunctionSpace(q_in.ufl_domain(), "CG", 2, vfamily="CG", vdegree=1)
-        q_targ = firedrake.interpolate(q_in, VLin)
+        q_targ = firedrake.assemble(interpolate(q_in, VLin))
         element_xz = q_targ.ufl_element()
-        element_x = element_xz.sub_elements()[0]
+        element_x = element_xz.sub_elements[0]
     else:
         VLin = firedrake.VectorFunctionSpace(q_in.ufl_domain(), "CG", 2, dim=shape[0], vfamily="CG", vdegree=1)
-        q_targ = firedrake.interpolate(q_in, VLin)
+        q_targ = firedrake.assemble(interpolate(q_in, VLin))
         element_xz = q_targ.ufl_element()
         element_xy = element_xz.sub_elements()[0].sub_elements()[0]
         element_x = firedrake.VectorElement(element_xy, dim=shape[0])
