@@ -241,3 +241,8 @@ def principal_stress(**kwargs):
 
 def von_mises_stress(eigs):
     return firedrake.sqrt(((eigs[0] - eigs[1]) ** 2.0 + (eigs[0] - eigs[2]) ** 2.0 + (eigs[1] - eigs[2]) ** 2.0) / 2.0)
+
+
+def von_mises_stress_vel(**kwargs):
+    τ = threed_stress(**kwargs)
+    return firedrake.sqrt(3 / 2 * firedrake.inner(τ, τ))
