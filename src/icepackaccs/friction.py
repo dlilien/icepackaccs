@@ -11,7 +11,27 @@
 import numpy as np
 from icepack.constants import ice_density as ρ_I, water_density as ρ_W, gravity as g
 from firedrake import max_value, min_value, sqrt, inner
-from icepack.models.friction import bed_friction
+from icepack.models.friction import itemgetter, friction_stress
+
+
+def bed_friction(m=3.0, **kwargs):
+    r"""Return the bed friction part of the ice stream action functional
+
+    Mimics icepack, but uses a variable m.
+
+    The frictional part of the ice stream action functional is
+
+    .. math::
+       E(u) = -\frac{m}{m + 1}\int_\Omega\tau(u, C)\cdot u\; dx
+
+    where :math:`\\tau(u, C)` is the basal shear stress
+
+    .. math::
+       \tau(u, C) = -C|u|^{1/m - 1}u
+    """
+    u, C = itemgetter("velocity", "friction")(kwargs)
+    τ = friction_stress(u, C)
+    return -m / (m + 1) * inner(τ, u)
 
 
 def get_regularized_coulomb(m=3.0, u_0=300.0, h_t=50.0):
@@ -68,20 +88,40 @@ def tau_mismip_assaydavis(m, u, h, s, α2=0.5, β2=1.0e-2):
     return α2 * N * u_b ** (1 / m - 1) / ((α2 * N / β2) ** m + u_b) ** (1 / m) * u
 
 
-def smooth_weertman_m3(**kwargs):
-    u = kwargs["velocity"]
-    h = kwargs["thickness"]
-    s = kwargs["surface"]
-    C = kwargs["friction"]
+def get_smooth_weertman(m=3.0):
+    def smooth_weertman(**kwargs):
+        u = kwargs["velocity"]
+        h = kwargs["thickness"]
+        s = kwargs["surface"]
+        C = kwargs["friction"]
 
-    p_W = ρ_W * g * max_value(0, h - s)
-    p_I = ρ_I * g * h
-    ϕ = 1 - p_W / p_I
-    return bed_friction(
-        velocity=u,
-        friction=C * ϕ,
-    )
+        p_W = ρ_W * g * max_value(0, h - s)
+        p_I = ρ_I * g * h
+        ϕ = 1 - p_W / p_I
+        return bed_friction(
+            m=m,
+            velocity=u,
+            friction=C * ϕ,
+        )
+    return smooth_weertman
+
+
+def get_weertman(m=3.0):
+    def weertman(**kwargs):
+        u = kwargs["velocity"]
+        C = kwargs["friction"]
+
+        return bed_friction(
+            m=m,
+            velocity=u,
+            friction=C,
+        )
+    return weertman
 
 
 regularized_coulomb = get_regularized_coulomb()
 regularized_coulomb_mismip = get_regularized_coulomb_mismip()
+smooth_weertman_m3 = get_smooth_weertman()
+smooth_weertman_linear = get_smooth_weertman(m=1.0)
+weertman_m3 = get_weertman(m=3.0)
+weertman_linear = get_weertman(m=1.0)
