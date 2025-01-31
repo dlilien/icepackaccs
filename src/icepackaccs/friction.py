@@ -11,7 +11,12 @@
 import numpy as np
 from icepack.constants import ice_density as ρ_I, water_density as ρ_W, gravity as g
 from firedrake import max_value, min_value, sqrt, inner
-from icepack.models.friction import itemgetter, friction_stress
+from icepack.models.friction import itemgetter
+
+
+def friction_stress(u, C, m=3):
+    r"""Compute the shear stress for a given sliding velocity"""
+    return -C * sqrt(inner(u, u)) ** (1 / m - 1) * u
 
 
 def bed_friction(m=3.0, **kwargs):
@@ -30,7 +35,7 @@ def bed_friction(m=3.0, **kwargs):
        \tau(u, C) = -C|u|^{1/m - 1}u
     """
     u, C = itemgetter("velocity", "friction")(kwargs)
-    τ = friction_stress(u, C)
+    τ = friction_stress(u, C, m)
     return -m / (m + 1) * inner(τ, u)
 
 
@@ -45,6 +50,17 @@ def get_regularized_coulomb(m=3.0, u_0=300.0, h_t=50.0):
         ramp = min_value(1, h_af / h_t)
         U = sqrt(inner(u, u))
         return C * ramp * ((u_0 ** (1 / m + 1) + U ** (1 / m + 1)) ** (m / (m + 1)) - u_0)
+
+    return regularized_coulomb
+
+
+def get_regularized_coulomb_simp(m=3.0, u_0=300.0, h_t=50.0):
+    def regularized_coulomb(**kwargs):
+        u = kwargs["velocity"]
+        C = kwargs["friction"]
+
+        U = sqrt(inner(u, u))
+        return C * ((u_0 ** (1 / m + 1) + U ** (1 / m + 1)) ** (m / (m + 1)) - u_0)
 
     return regularized_coulomb
 
