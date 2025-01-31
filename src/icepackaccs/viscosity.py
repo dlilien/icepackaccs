@@ -83,7 +83,7 @@ def rate_factor(T, n=3, m=None, m_exp=1.8):
         return A0 * np.exp(-Q / (R * T))
 
 
-def rf(**kwargs):
+def A_times_eps(**kwargs):
     r"""Return the viscous part of the hybrid model action functional
 
     The viscous component of the action for the hybrid model is
