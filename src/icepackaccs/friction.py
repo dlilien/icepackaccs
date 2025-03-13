@@ -49,7 +49,25 @@ def get_regularized_coulomb(m=3.0, u_0=300.0, h_t=50.0):
         h_af = max_value(h - H * (1 - ρ_I / ρ_W), 0)
         ramp = min_value(1, h_af / h_t)
         U = sqrt(inner(u, u))
+
         return C * ramp * ((u_0 ** (1 / m + 1) + U ** (1 / m + 1)) ** (m / (m + 1)) - u_0)
+
+    return regularized_coulomb
+
+
+def get_regularized_coulomb_ramp(m=3.0, u_0=300.0, h_t=50.0):
+    def regularized_coulomb(**kwargs):
+        u = kwargs["velocity"]
+        C = kwargs["friction"]
+        h = kwargs["thickness"]
+        s = kwargs["surface"]
+        U = sqrt(inner(u, u))
+
+        p_W = ρ_W * g * max_value(0, h - s)
+        p_I = ρ_I * g * h
+        ϕ = 1 - p_W / p_I
+
+        return C * ϕ * ((u_0 ** (1 / m + 1) + U ** (1 / m + 1)) ** (m / (m + 1)) - u_0)
 
     return regularized_coulomb
 
@@ -114,10 +132,28 @@ def get_smooth_weertman(m=3.0):
         p_W = ρ_W * g * max_value(0, h - s)
         p_I = ρ_I * g * h
         ϕ = 1 - p_W / p_I
+
         return bed_friction(
             m=m,
             velocity=u,
             friction=C * ϕ,
+        )
+    return smooth_weertman
+
+
+def get_ramp_weertman(m=3.0, h_t=50.0):
+    def smooth_weertman(**kwargs):
+        u = kwargs["velocity"]
+        H = kwargs["thickness"]
+        h = kwargs["surface"]
+        C = kwargs["friction"]
+
+        h_af = max_value(h - H * (1 - ρ_I / ρ_W), 0)
+        ramp = min_value(1, h_af / h_t)
+        return bed_friction(
+            m=m,
+            velocity=u,
+            friction=C * ramp,
         )
     return smooth_weertman
 
