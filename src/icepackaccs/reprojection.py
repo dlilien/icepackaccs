@@ -25,7 +25,7 @@ def extract_surface(q_in):
         VLin = firedrake.VectorFunctionSpace(q_in.ufl_domain(), "CG", 2, dim=shape[0], vfamily="CG", vdegree=1)
         q_targ = firedrake.assemble(interpolate(q_in, VLin))
         element_xz = q_targ.ufl_element()
-        element_xy = element_xz.sub_elements()[0].sub_elements()[0]
+        element_xy = element_xz.sub_elements[0].sub_elements[0]
         element_x = firedrake.VectorElement(element_xy, dim=shape[0])
 
     Q_x = firedrake.FunctionSpace(mesh_x, element_x)
@@ -49,7 +49,7 @@ def extract_bed(q_in):
         VLin = firedrake.VectorFunctionSpace(q_in.ufl_domain(), "CG", 2, dim=shape[0], vfamily="CG", vdegree=1)
         q_targ = firedrake.assemble(interpolate(q_in, VLin))
         element_xz = q_targ.ufl_element()
-        element_xy = element_xz.sub_elements()[0].sub_elements()[0]
+        element_xy = element_xz.sub_elements[0].sub_elements[0]
         element_x = firedrake.VectorElement(element_xy, dim=shape[0])
 
     Q_x = firedrake.FunctionSpace(mesh_x, element_x)
