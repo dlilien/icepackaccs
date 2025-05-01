@@ -138,6 +138,7 @@ def get_smooth_weertman(m=3.0):
             velocity=u,
             friction=C * ϕ,
         )
+
     return smooth_weertman
 
 
@@ -155,6 +156,7 @@ def get_ramp_weertman(m=3.0, h_t=50.0):
             velocity=u,
             friction=C * ramp,
         )
+
     return smooth_weertman
 
 
@@ -168,6 +170,7 @@ def get_weertman(m=3.0):
             velocity=u,
             friction=C,
         )
+
     return weertman
 
 

@@ -18,18 +18,24 @@ from operator import itemgetter
 # 3 follows standard icepack
 # 3.5 follows Fan et al., 2025 for high stress
 
-A0_consts = {3: {"cold": 3.985e-13 * year * 1.0e18, "warm": 1.916e3 * year * 1.0e18},
-             3.5: {"cold": 1, "warm": 7.76e12 * year},
-             4: {"cold": 4.0e5 * year, "warm": 6.0e28 * year},
-             1.8: {"cold": 3.9e-3 * year, "warm": 3.0e26 * year}}
-Q_consts = {3: {"cold": 60, "warm": 139},
-            3.5: {"cold": 0, "warm": 90},
-            4: {"cold": 60, "warm": 181},
-            1.8: {"cold": 49, "warm": 192}}
-trans_temps = {3: 263.15,
-               3.5: 0,  # One value, we choose to call everything warm
-               4: 258,
-               1.8: 255}
+A0_consts = {
+    3: {"cold": 3.985e-13 * year * 1.0e18, "warm": 1.916e3 * year * 1.0e18},
+    3.5: {"cold": 10**12.89 * year, "warm": 10**12.89 * year},
+    4: {"cold": 4.0e5 * year, "warm": 6.0e28 * year},
+    1.8: {"cold": 3.9e-3 * year, "warm": 3.0e26 * year},
+}
+Q_consts = {
+    3: {"cold": 60, "warm": 139},
+    3.5: {"cold": 90, "warm": 90},
+    4: {"cold": 60, "warm": 181},
+    1.8: {"cold": 49, "warm": 192},
+}
+trans_temps = {
+    3: 263.15,
+    3.5: 0,  # One value, we choose to call everything warm
+    4: 258,
+    1.8: 255,
+}
 
 
 def rate_factor(T, n=3, m=None, m_exp=1.4, trans_temps=trans_temps):
@@ -73,7 +79,7 @@ def rate_factor(T, n=3, m=None, m_exp=1.4, trans_temps=trans_temps):
         A0 = firedrake.conditional(cold, A0_consts[n]["cold"], A0_consts[n]["warm"])
         Q = firedrake.conditional(cold, Q_consts[n]["cold"], Q_consts[n]["warm"])
         if m is not None:
-            A = A0 * firedrake.exp(-Q / (R * T)) * m ** m_exp
+            A = A0 * firedrake.exp(-Q / (R * T)) * m**m_exp
         else:
             A = A0 * firedrake.exp(-Q / (R * T))
         if isinstance(T, firedrake.Constant):
@@ -86,7 +92,7 @@ def rate_factor(T, n=3, m=None, m_exp=1.4, trans_temps=trans_temps):
     A0 = A0_consts[n]["cold"] * cold + A0_consts[n]["warm"] * warm
     Q = Q_consts[n]["cold"] * cold + Q_consts[n]["warm"] * warm
     if m is not None:
-        return A0 * np.exp(-Q / (R * T)) * m ** m_exp
+        return A0 * np.exp(-Q / (R * T)) * m**m_exp
     else:
         return A0 * np.exp(-Q / (R * T))
 
@@ -145,25 +151,28 @@ if __name__ == "__main__":
     plt.ylabel("A(T) (MPa$^{-4}$ yr$^{-1}$)")
     fig.savefig("/Users/dlilien/Desktop/A_of_T_n=4.pdf")
 
-
     fig, ax = plt.subplots()
     T0 = -10 + 273.15
     T2 = -12 + 273.15
-    tau = 10**np.linspace(-3, 0, 100)
+    tau = 10 ** np.linspace(-3, 0, 100)
 
     A3 = rate_factor(T0, n=3)
+    A3_5 = rate_factor(T0, n=3.5)
     A4 = rate_factor(T0, n=4)
     A1_8 = rate_factor(T0, n=1.8, m=0.001)
-    ax.plot(tau, tau ** 3 * A3, label="$n$=3")
-    ax.plot(tau, tau ** 4 * A4, label="$n$=4")
-    ax.plot(tau, tau ** 1.8 * A1_8, label="$n$=1.8")
+    ax.plot(tau, tau**3 * A3, label="$n$=3")
+    ax.plot(tau, tau**3.5 * A3_5, label="$n$=3.5")
+    ax.plot(tau, tau**4 * A4, label="$n$=4")
+    ax.plot(tau, tau**1.8 * A1_8, label="$n$=1.8")
 
     A3 = rate_factor(T2, n=3)
+    A3_5 = rate_factor(T2, n=3.5)
     A4 = rate_factor(T2, n=4)
     A1_8 = rate_factor(T2, n=1.8, m=0.001)
-    ax.plot(tau, tau ** 3 * A3, label="$n$=3", linestyle="dashed")
-    ax.plot(tau, tau ** 4 * A4, label="$n$=4", linestyle="dashed")
-    ax.plot(tau, tau ** 1.8 * A1_8, label="$n$=1.8", linestyle="dashed")
+    ax.plot(tau, tau**3 * A3, label="$n$=3", linestyle="dashed")
+    ax.plot(tau, tau**3.5 * A3_5, label="$n$=3.5", linestyle="dashed")
+    ax.plot(tau, tau**4 * A4, label="$n$=4", linestyle="dashed")
+    ax.plot(tau, tau**1.8 * A1_8, label="$n$=1.8", linestyle="dashed")
 
     ax.legend(loc="best")
 

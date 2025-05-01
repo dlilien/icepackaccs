@@ -29,7 +29,7 @@ def mismip_bed_topography(mesh):
     B_2 = Constant(-728.8)
     B_4 = Constant(343.91)
     B_6 = Constant(-50.57)
-    B_x = B_0 + B_2 * X ** 2 + B_4 * X ** 4 + B_6 * X ** 6
+    B_x = B_0 + B_2 * X**2 + B_4 * X**4 + B_6 * X**6
 
     f_c = Constant(4e3)
     d_c = Constant(500)

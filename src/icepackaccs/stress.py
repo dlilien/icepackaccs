@@ -25,7 +25,13 @@ def threed_stress(**kwargs):
     ε2d = sym_grad(u)
     ε_min = firedrake.Constant(kwargs.get("strain_rate_min", strain_rate_min))
     ε_e = _effective_strain_rate(ε2d, ε_min)
-    ε = firedrake.as_matrix(([ε2d[0, 0], ε2d[0, 1], 0], [ε2d[1, 0], ε2d[1, 1], 0], [0, 0, -ε2d[0, 0] - ε2d[1, 1]]))
+    ε = firedrake.as_matrix(
+        (
+            [ε2d[0, 0], ε2d[0, 1], 0],
+            [ε2d[1, 0], ε2d[1, 1], 0],
+            [0, 0, -ε2d[0, 0] - ε2d[1, 1]],
+        )
+    )
 
     Ident = Identity(3)
     μ = 0.5 * A ** (-1 / n) * ε_e ** (1 / n - 1)
@@ -46,7 +52,7 @@ def eigenstate3(A):
     eps = 3.0e-16  # slightly above 2**-(53 - 1), see https://en.wikipedia.org/wiki/IEEE_754
 
     I1, I2, I3 = invariants_principal(A)
-    dq = 2 * I1 ** 3 - 9 * I1 * I2 + 27 * I3
+    dq = 2 * I1**3 - 9 * I1 * I2 + 27 * I3
     #
     Δx = [
         A[0, 1] * A[1, 2] * A[2, 0] - A[0, 2] * A[1, 0] * A[2, 1],
@@ -209,8 +215,22 @@ def eigenstate3(A):
     for i in range(len(Δd)):
         Δ += Δx[i] * Δd[i] * Δy[i]
 
-    Δxp = [A[1, 0], A[2, 0], A[2, 1], -A[0, 0] + A[1, 1], -A[0, 0] + A[2, 2], -A[1, 1] + A[2, 2]]
-    Δyp = [A[0, 1], A[0, 2], A[1, 2], -A[0, 0] + A[1, 1], -A[0, 0] + A[2, 2], -A[1, 1] + A[2, 2]]
+    Δxp = [
+        A[1, 0],
+        A[2, 0],
+        A[2, 1],
+        -A[0, 0] + A[1, 1],
+        -A[0, 0] + A[2, 2],
+        -A[1, 1] + A[2, 2],
+    ]
+    Δyp = [
+        A[0, 1],
+        A[0, 2],
+        A[1, 2],
+        -A[0, 0] + A[1, 1],
+        -A[0, 0] + A[2, 2],
+        -A[1, 1] + A[2, 2],
+    ]
     Δdp = [6, 6, 6, 1, 1, 1]
 
     dp = 0
@@ -219,8 +239,8 @@ def eigenstate3(A):
 
     # Avoid dp = 0 and disc = 0, both are known with absolute error of ~eps**2
     # Required to avoid sqrt(0) derivatives and negative square roots
-    dp += eps ** 2
-    Δ += eps ** 2
+    dp += eps**2
+    Δ += eps**2
 
     phi3 = firedrake.atan2(firedrake.sqrt(27.0) * firedrake.sqrt(Δ), dq)
 
