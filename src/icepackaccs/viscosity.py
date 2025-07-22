@@ -38,7 +38,7 @@ trans_temps = {
 }
 
 
-def rate_factor(T, n=3, m=None, m_exp=1.4, trans_temps=trans_temps):
+def rate_factor(T, n=3, m=None, m_exp=-1.4, trans_temps=trans_temps):
     r"""Compute the rate factor in Glen's flow law for a given temperature
 
     The strain rate :math:`\dot\varepsilon` of ice resulting from a stress
