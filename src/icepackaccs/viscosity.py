@@ -48,24 +48,30 @@ A0_consts = {
         "warm": octahedral_to_effective(10**25 * year, 4)},
     1.8: {"cold": octahedral_to_effective(10**2.48 * year, 1.8),
           "warm": octahedral_to_effective(10**38.37 * year, 1.8)},
-    # 4: {"cold": axial_to_effective(4.0e5 * year, 4),  # Uncorrected Goldsby & Kohlstedt
-    #     "warm": axial_to_effective(6.0e28 * year, 4)},
+    # 4: {"cold": axial_to_effective(4.0e5 * year, 4),  # Goldsby & Kohlstedt converted to effective
+    #    "warm": axial_to_effective(6.0e28 * year, 4)},
     # 1.8: {"cold": axial_to_effective(3.9e-3 * year, 1.8),
     #       "warm": axial_to_effective(3.0e26 * year, 1.8)},
+    # 4: {"cold": 4.0e5 * year,  # Uncorrected Goldsby & Kohlstedt
+    #     "warm": 6.0e28 * year},
+    # 1.8: {"cold": 3.9e-3 * year,
+    #       "warm": 3.0e26 * year},
 }
 Q_consts = {
     3: {"cold": 60, "warm": 139},
     3.5: {"cold": 90, "warm": 90},
-    4: {"cold": 60, "warm": 181},
-    1.8: {"cold": 49, "warm": 192},
+    4: {"cold": 64, "warm": 155},
+    1.8: {"cold": 70, "warm": 250},
+    # 4: {"cold": 60, "warm": 181},  # Goldsby & Kohlstedt
+    # 1.8: {"cold": 49, "warm": 192},  # Goldsby & Kohlstedt
 }
 trans_temps = {
     3: 263.15,
     3.5: 0,  # One value, we choose to call everything warm
     4: 262,
     1.8: 262
-    # 4: 258,  # Uncorrected Goldsby & Kohlstedt
-    # 1.8: 255,  # Uncorrected Goldsby & Kohlstedt
+    # 4: 258,  # Goldsby & Kohlstedt
+    # 1.8: 255,  # Goldsby & Kohlstedt
 }
 
 
