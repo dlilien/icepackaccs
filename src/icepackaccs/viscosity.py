@@ -14,15 +14,44 @@ from icepack.constants import year, ideal_gas as R
 import numpy as np
 from operator import itemgetter
 
-# 1.8 and 4 from Ranganathan and Minchew, 2024
+# 1.8 and 4 from Fan et al.'s recallibration of Goldsby & Kohlstedt; this avoids discontinuities in A(T)
 # 3 follows standard icepack
 # 3.5 follows Fan et al., 2025 for high stress
 
+# 1.8, 3.5, 4 are octahedral stress/strain
+# We need to convert each of these to be in terms of effective stress
+# 3 is already in terms of effective stress
+
+
+
+def axial_to_octahedral(A_axial, n):
+    # S7 from Fan et al., 2025
+    return A_axial * 3. ** n / 2. ** ((n + 1) / 2.0)
+
+
+def octahedral_to_effective(A_oct, n):
+    # S7 from Fan et al., 2025
+    return A_oct * (2. / 3.) ** ((n - 1) / 2.0)
+
+
+def axial_to_effective(A_axial, n):
+    A_oct = axial_to_octahedral(A_axial, n)
+    return octahedral_to_effective(A_oct, n)
+
+
 A0_consts = {
-    3: {"cold": 3.985e-13 * year * 1.0e18, "warm": 1.916e3 * year * 1.0e18},
-    3.5: {"cold": 10**12.89 * year, "warm": 10**12.89 * year},
-    4: {"cold": 4.0e5 * year, "warm": 6.0e28 * year},
-    1.8: {"cold": 3.9e-3 * year, "warm": 3.0e26 * year},
+    3: {"cold": 3.985e-13 * year * 1.0e18,
+        "warm": 1.916e3 * year * 1.0e18},
+    3.5: {"cold": octahedral_to_effective(10**12.89 * year, 3.5),
+          "warm": octahedral_to_effective(10**12.89 * year, 3.5)},
+    4: {"cold": octahedral_to_effective(10**6.85 * year, 4),
+        "warm": octahedral_to_effective(10**25 * year, 4)},
+    1.8: {"cold": octahedral_to_effective(10**2.48 * year, 1.8),
+          "warm": octahedral_to_effective(10**38.37 * year, 1.8)},
+    # 4: {"cold": axial_to_effective(4.0e5 * year, 4),  # Uncorrected Goldsby & Kohlstedt
+    #     "warm": axial_to_effective(6.0e28 * year, 4)},
+    # 1.8: {"cold": axial_to_effective(3.9e-3 * year, 1.8),
+    #       "warm": axial_to_effective(3.0e26 * year, 1.8)},
 }
 Q_consts = {
     3: {"cold": 60, "warm": 139},
@@ -33,8 +62,10 @@ Q_consts = {
 trans_temps = {
     3: 263.15,
     3.5: 0,  # One value, we choose to call everything warm
-    4: 258,
-    1.8: 255,
+    4: 262,
+    1.8: 262
+    # 4: 258,  # Uncorrected Goldsby & Kohlstedt
+    # 1.8: 255,  # Uncorrected Goldsby & Kohlstedt
 }
 
 
