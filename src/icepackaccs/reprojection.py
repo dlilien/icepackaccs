@@ -64,6 +64,8 @@ def extract_bed(q_in):
         element_xz = q_targ.ufl_element()
         if hasattr(element_xz, "factor_elements"):
             element_xy = element_xz.factor_elements[0].sub_elements[0]
+        elif hasattr(element_xz.sub_elements[0], "factor_elements"):
+            element_xy = element_xz.sub_elements[0].factor_elements[0]
         else:
             element_xy = element_xz.sub_elements[0].sub_elements[0]
         element_x = firedrake.VectorElement(element_xy, dim=shape[0])
