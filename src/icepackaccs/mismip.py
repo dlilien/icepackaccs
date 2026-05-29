@@ -8,6 +8,7 @@
 """
 Define some constants for the MISMIP+ setup
 """
+
 from firedrake import SpatialCoordinate, max_value, Constant, exp
 
 Lx = 640.0e3

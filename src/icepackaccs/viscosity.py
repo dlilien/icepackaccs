@@ -5,9 +5,8 @@
 #
 # Distributed under terms of the MIT license.
 
-"""
+""" """
 
-"""
 import icepack
 import firedrake
 from icepack.constants import year, ideal_gas as R
@@ -23,15 +22,14 @@ from operator import itemgetter
 # 3 is already in terms of effective stress
 
 
-
 def axial_to_octahedral(A_axial, n):
     # S7 from Fan et al., 2025
-    return A_axial * 3. ** n / 2. ** ((n + 1) / 2.0)
+    return A_axial * 3.0**n / 2.0 ** ((n + 1) / 2.0)
 
 
 def octahedral_to_effective(A_oct, n):
     # S7 from Fan et al., 2025
-    return A_oct * (2. / 3.) ** ((n - 1) / 2.0)
+    return A_oct * (2.0 / 3.0) ** ((n - 1) / 2.0)
 
 
 def axial_to_effective(A_axial, n):
@@ -40,14 +38,10 @@ def axial_to_effective(A_axial, n):
 
 
 A0_consts = {
-    3: {"cold": 3.985e-13 * year * 1.0e18,
-        "warm": 1.916e3 * year * 1.0e18},
-    3.5: {"cold": octahedral_to_effective(10**12.89 * year, 3.5),
-          "warm": octahedral_to_effective(10**12.89 * year, 3.5)},
-    4: {"cold": octahedral_to_effective(10**6.85 * year, 4),
-        "warm": octahedral_to_effective(10**25 * year, 4)},
-    1.8: {"cold": octahedral_to_effective(10**2.48 * year, 1.8),
-          "warm": octahedral_to_effective(10**38.37 * year, 1.8)},
+    3: {"cold": 3.985e-13 * year * 1.0e18, "warm": 1.916e3 * year * 1.0e18},
+    3.5: {"cold": octahedral_to_effective(10**12.89 * year, 3.5), "warm": octahedral_to_effective(10**12.89 * year, 3.5)},
+    4: {"cold": octahedral_to_effective(10**6.85 * year, 4), "warm": octahedral_to_effective(10**25 * year, 4)},
+    1.8: {"cold": octahedral_to_effective(10**2.48 * year, 1.8), "warm": octahedral_to_effective(10**38.37 * year, 1.8)},
     # 4: {"cold": axial_to_effective(4.0e5 * year, 4),  # Goldsby & Kohlstedt converted to effective
     #    "warm": axial_to_effective(6.0e28 * year, 4)},
     # 1.8: {"cold": axial_to_effective(3.9e-3 * year, 1.8),
@@ -69,7 +63,7 @@ trans_temps = {
     3: 263.15,
     3.5: 0,  # One value, we choose to call everything warm
     4: 262,
-    1.8: 262
+    1.8: 262,
     # 4: 258,  # Goldsby & Kohlstedt
     # 1.8: 255,  # Goldsby & Kohlstedt
 }
@@ -210,7 +204,9 @@ if __name__ == "__main__":
     ax.plot(tau, tau**3.5 * A3_5, label="$n$=3.5", linestyle="dashed")
     ax.plot(tau, tau**4 * A4, label="$n$=4", linestyle="dashed")
     ax.plot(tau, tau**1.8 * A1_8, label="$n$=1.8", linestyle="dashed")
-
     ax.legend(loc="best")
+
+    print({n: {T: "{:3.3e}".format(a) for T, a in d.items()} for n, d in A0_consts.items()})
+    print(Q_consts)
 
     plt.show()

@@ -6,9 +6,8 @@
 #
 # Distributed under terms of the GNU GPL3.0 license.
 
-"""
+""" """
 
-"""
 import firedrake
 from firedrake import interpolate
 

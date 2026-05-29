@@ -5,9 +5,8 @@
 #
 # Distributed under terms of the GNU GPL3.0 license.
 
-"""
+""" """
 
-"""
 import numpy as np
 from icepack.constants import ice_density as ρ_I, water_density as ρ_W, gravity as g
 from firedrake import max_value, min_value, sqrt, inner
