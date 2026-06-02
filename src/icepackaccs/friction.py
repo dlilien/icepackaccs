@@ -202,8 +202,3 @@ smooth_weertman_m3 = get_smooth_weertman()
 smooth_weertman_linear = get_smooth_weertman(m=1.0)
 weertman_m3 = get_weertman(m=3.0)
 weertman_linear = get_weertman(m=1.0)
-
-
-def pos_linear_weertman(**kwargs):
-    C = kwargs.pop("friction")
-    return weertman_linear(friction=C**2.0, **kwargs)
