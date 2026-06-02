@@ -8,8 +8,10 @@
 """ """
 
 import numpy as np
-from icepack.constants import ice_density as ρ_I, water_density as ρ_W, gravity as g
+
+import firedrake
 from firedrake import max_value, min_value, sqrt, inner
+from icepack.constants import ice_density as ρ_I, water_density as ρ_W, gravity as g
 from icepack.models.friction import itemgetter
 
 
@@ -173,9 +175,35 @@ def get_weertman(m=3.0):
     return weertman
 
 
+def c1_to_c3(C1, u):
+    U = firedrake.sqrt(firedrake.dot(u, u))
+    C3 = firedrake.Function(C1.function_space()).interpolate(firedrake.sqrt(C1**2.0 / abs(U) ** (1.0 / 3.0 - 1.0)))
+    return C3
+
+
+def c3_to_beta(C3, u, u0):
+    U = firedrake.sqrt(firedrake.dot(u, u))
+    beta = firedrake.Function(firedrake.FunctionSpace(C3.ufl_domain(), "CG", 2)).interpolate(
+        firedrake.sqrt(C3**2.0 * (U ** (1.0 / 3.0 + 1) + u0 ** (1.0 / 3.0 + 1)) ** (1.0 / (3.0 + 1.0)))
+    )
+    return beta
+
+
+def c3_to_c1(C3, u, minslide=0.0):
+    C1 = firedrake.Function(C3.function_space())
+    U = firedrake.max_value(firedrake.sqrt(firedrake.dot(u, u)), minslide)
+    C1.interpolate(firedrake.sqrt(C3**2.0 * abs(U) ** (1.0 / 3.0 - 1.0)))
+    return C1
+
+
 regularized_coulomb = get_regularized_coulomb()
 regularized_coulomb_mismip = get_regularized_coulomb_mismip()
 smooth_weertman_m3 = get_smooth_weertman()
 smooth_weertman_linear = get_smooth_weertman(m=1.0)
 weertman_m3 = get_weertman(m=3.0)
 weertman_linear = get_weertman(m=1.0)
+
+
+def pos_linear_weertman(**kwargs):
+    C = kwargs.pop("friction")
+    return weertman_linear(friction=C**2.0, **kwargs)

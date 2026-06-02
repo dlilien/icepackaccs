@@ -1,15 +1,16 @@
 #! /usr/bin/env python3
 # vim:fenc=utf-8
 #
-# Copyright © 2025 dlilien <dlilien@noatak>
+# Copyright © 2025 David Lilien <dlilien@iu.edu>
 #
-# Distributed under terms of the MIT license.
+# Distributed under terms of the GNU GPL3.0 license.
 
-""" """
+"""Viscosity functions for variable flow law exponents"""
 
 import icepack
 import firedrake
-from icepack.constants import year, ideal_gas as R
+from icepack.constants import year, ideal_gas as R, strain_rate_min
+from icepack.calculus import trace, sym_grad
 import numpy as np
 from operator import itemgetter
 
@@ -20,6 +21,16 @@ from operator import itemgetter
 # 1.8, 3.5, 4 are octahedral stress/strain
 # We need to convert each of these to be in terms of effective stress
 # 3 is already in terms of effective stress
+
+# These scales can be used for non-dimensionalization. From Greve 2025.
+TAU_SCALE = 0.1  # 100 kPa
+EPS_SCALE = 0.025  # per year
+
+A_SCALE = 100.0  # Used to balance inversions for A, not a physical parameter
+
+
+def nondim_A(A, n):
+    return A / (EPS_SCALE / TAU_SCALE**n)
 
 
 def axial_to_octahedral(A_axial, n):
@@ -168,8 +179,114 @@ def A_times_eps(**kwargs):
     return A * ε_e ** (n), ε_e
 
 
+def A3_to_An(A3, u, h, s, n, Q):
+    ε_e = effective_strain_rate(u)
+    # return firedrake.Function(u.function_space()).interpolate(A3 * ε_e ** (n - 3.0))
+    An = firedrake.Function(Q).interpolate(A3 ** (n / 3.0) * ε_e ** (1.0 - n / 3.0))
+    An_mean = firedrake.assemble(An * firedrake.dx) / firedrake.assemble(firedrake.Function(Q).interpolate(1.0) * firedrake.dx)
+    return firedrake.Function(Q).interpolate(firedrake.conditional(h > 10.1, An, An_mean))
+
+
+def effective_strain_rate(u, ε_min=strain_rate_min):
+    ε = sym_grad(u)
+    return firedrake.sqrt((firedrake.inner(ε, ε) + trace(ε) ** 2 + ε_min**2) / 2)
+
+
+def tunable_depth_averaged_viscosity(**kwargs):
+    r"""Return the viscous part of the action for depth-averaged models
+
+    The viscous component of the action for depth-averaged ice flow is
+
+    .. math::
+        E(u) = \frac{n}{n+1}\int_\Omega h\cdot
+        M(\dot\varepsilon, A):\dot\varepsilon\; dx
+
+    where :math:`M(\dot\varepsilon, A)` is the membrane stress tensor
+
+    .. math::
+        M(\dot\varepsilon, A) = A^{-1/n}|\dot\varepsilon|^{1/n - 1}
+        (\dot\varepsilon + \text{tr}\dot\varepsilon\cdot I).
+
+    This form assumes that we're using the fluidity parameter instead
+    the rheology parameter, the temperature, etc. To use a different
+    variable, you can implement your own viscosity functional and pass it
+    as an argument when initializing model objects to use your functional
+    instead.
+
+    We include regularization of Glen's law in the limit of zero strain rate
+    by default. You can set the regularization to the value of your choice or
+    to zero by passing it to the `strain_rate_min` argument.
+
+    Parameters
+    ----------
+    velocity : firedrake.Function
+    thickness : firedrake.Function
+    fluidity : firedrake.Function
+    strain_rate_min : firedrake.Constant
+
+    Returns
+    -------
+    firedrake.Form
+    """
+    u, h, A, mod_A, is_floating = itemgetter("velocity", "thickness", "fluidity", "mod_A", "is_floating")(kwargs)
+    ε_min = kwargs.get("strain_rate_min", firedrake.Constant(strain_rate_min))
+    n = kwargs.get("flow_law_exponent", 3.0)
+    ε_e = effective_strain_rate(u, ε_min=ε_min)
+    return 2 * n / (n + 1) * h * (firedrake.exp(is_floating * mod_A * A_SCALE) * A) ** (-1 / n) * ε_e ** (1 / n + 1)
+
+
+def depth_averaged_viscosity(**kwargs):
+    r"""Return the viscous part of the action for depth-averaged models
+
+    The viscous component of the action for depth-averaged ice flow is
+
+    .. math::
+        E(u) = \frac{n}{n+1}\int_\Omega h\cdot
+        M(\dot\varepsilon, A):\dot\varepsilon\; dx
+
+    where :math:`M(\dot\varepsilon, A)` is the membrane stress tensor
+
+    .. math::
+        M(\dot\varepsilon, A) = A^{-1/n}|\dot\varepsilon|^{1/n - 1}
+        (\dot\varepsilon + \text{tr}\dot\varepsilon\cdot I).
+
+    This form assumes that we're using the fluidity parameter instead
+    the rheology parameter, the temperature, etc. To use a different
+    variable, you can implement your own viscosity functional and pass it
+    as an argument when initializing model objects to use your functional
+    instead.
+
+    We include regularization of Glen's law in the limit of zero strain rate
+    by default. You can set the regularization to the value of your choice or
+    to zero by passing it to the `strain_rate_min` argument.
+
+    Parameters
+    ----------
+    velocity : firedrake.Function
+    thickness : firedrake.Function
+    fluidity : firedrake.Function
+    strain_rate_min : firedrake.Constant
+
+    Returns
+    -------
+    firedrake.Form
+    """
+    u, h, A = itemgetter("velocity", "thickness", "fluidity")(kwargs)
+    ε_min = kwargs.get("strain_rate_min", firedrake.Constant(strain_rate_min))
+    n = kwargs.get("flow_law_exponent", 3.0)
+    ε_e = effective_strain_rate(u, ε_min=ε_min)
+    return 2 * n / (n + 1) * h * A ** (-1 / n) * ε_e ** (1 / n + 1)
+
+
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
+
+    A0 = rate_factor(-10 + 273.15)
+    eps_0 = A0 * TAU_SCALE**3.0
+    print(eps_0)
+    tau_0 = (EPS_SCALE / A0) ** (1.0 / 3.0)
+    print(tau_0)
+    raise SystemExit
 
     fig, ax = plt.subplots()
     T = np.linspace(-30, 0, 100) + 273.15
@@ -180,7 +297,6 @@ if __name__ == "__main__":
     ax.legend(loc="best")
     plt.xlabel("Temperature (K)")
     plt.ylabel("A(T) (MPa$^{-4}$ yr$^{-1}$)")
-    fig.savefig("/Users/dlilien/Desktop/A_of_T_n=4.pdf")
 
     fig, ax = plt.subplots()
     T0 = -10 + 273.15
