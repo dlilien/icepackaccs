@@ -189,11 +189,11 @@ def A3_to_An(A3, u, h, s, n, Q):
 
 def nondim_A3_to_An(A0_3, u, h, s, n, Q):
     """Exact non-dimensional An from non-dimensional A3.
-    
-    We want to be exact rather than using the from the scales, but we are still non-dimensional."""
+
+    We want to be exact rather than using the scales, but we are still non-dimensional."""
     ε_e = effective_strain_rate(u)
     # return firedrake.Function(u.function_space()).interpolate(A3 * ε_e ** (n - 3.0))
-    An = firedrake.Function(Q).interpolate(A0_3 ** (n / 3.0) * ε_e ** (1.0 - n / 3.0) * EPS_SCALE ** (n / 3.0 -1.0))
+    An = firedrake.Function(Q).interpolate(A0_3 ** (n / 3.0) * ε_e ** (1.0 - n / 3.0) * EPS_SCALE ** (n / 3.0 - 1.0))
     An_mean = firedrake.assemble(An * firedrake.dx) / firedrake.assemble(firedrake.Function(Q).interpolate(1.0) * firedrake.dx)
     return firedrake.Function(Q).interpolate(firedrake.conditional(h > 10.1, An, An_mean))
 
