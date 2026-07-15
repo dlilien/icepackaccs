@@ -179,8 +179,25 @@ def A_times_eps(**kwargs):
     return A * ε_e ** (n), ε_e
 
 
+def _is_extruded(function):
+    mesh = function.ufl_domain()
+    base_mesh = getattr(mesh, "_base_mesh", None)
+    if base_mesh is None:
+        return False
+    try:
+        mesh_dim = mesh.topological_dimension
+        base_dim = base_mesh.topological_dimension
+        if callable(mesh_dim):
+            mesh_dim = mesh_dim()
+        if callable(base_dim):
+            base_dim = base_dim()
+        return mesh_dim > base_dim
+    except AttributeError:
+        return True
+
+
 def A3_to_An(A3, u, h, s, n, Q):
-    ε_e = effective_strain_rate(u)
+    ε_e = effective_strain_rate(velocity=u, thickness=h, surface=s)
     # return firedrake.Function(u.function_space()).interpolate(A3 * ε_e ** (n - 3.0))
     An = firedrake.Function(Q).interpolate(A3 ** (n / 3.0) * ε_e ** (1.0 - n / 3.0))
     An_mean = firedrake.assemble(An * firedrake.dx) / firedrake.assemble(firedrake.Function(Q).interpolate(1.0) * firedrake.dx)
@@ -191,19 +208,38 @@ def nondim_A3_to_An(A0_3, u, h, s, n, Q):
     """Exact non-dimensional An from non-dimensional A3.
 
     We want to be exact rather than using the scales, but we are still non-dimensional."""
-    ε_e = effective_strain_rate(u)
+    ε_e = effective_strain_rate(velocity=u, thickness=h, surface=s)
     # return firedrake.Function(u.function_space()).interpolate(A3 * ε_e ** (n - 3.0))
     An = firedrake.Function(Q).interpolate(A0_3 ** (n / 3.0) * ε_e ** (1.0 - n / 3.0) * EPS_SCALE ** (n / 3.0 - 1.0))
     An_mean = firedrake.assemble(An * firedrake.dx) / firedrake.assemble(firedrake.Function(Q).interpolate(1.0) * firedrake.dx)
     return firedrake.Function(Q).interpolate(firedrake.conditional(h > 10.1, An, An_mean))
 
 
-def effective_strain_rate(u, ε_min=strain_rate_min):
+def effective_strain_rate(*args, **kwargs):
+    if len(args) > 1:
+        raise TypeError("effective_strain_rate accepts at most one positional velocity argument")
+    if args and "velocity" in kwargs:
+        raise TypeError("velocity was provided both positionally and by keyword")
+
+    u = args[0] if args else kwargs.get("velocity")
+    if u is None:
+        raise TypeError("effective_strain_rate requires a velocity")
+
+    ε_min = kwargs.get("ε_min", kwargs.get("strain_rate_min", strain_rate_min))
+    if _is_extruded(u):
+        h = kwargs.get("thickness")
+        s = kwargs.get("surface")
+        if h is None or s is None:
+            raise ValueError("thickness and surface are required for extruded 3D effective_strain_rate calls")
+        ε_x = icepack.models.hybrid.horizontal_strain_rate(velocity=u, surface=s, thickness=h)
+        ε_z = icepack.models.hybrid.vertical_strain_rate(velocity=u, thickness=h)
+        return icepack.models.hybrid._effective_strain_rate(ε_x, ε_z, ε_min)
+
     ε = sym_grad(u)
     return firedrake.sqrt((firedrake.inner(ε, ε) + trace(ε) ** 2 + ε_min**2) / 2)
 
 
-def tunable_depth_averaged_viscosity(**kwargs):
+def tunable_viscosity(**kwargs):
     r"""Return the viscous part of the action for depth-averaged models
 
     The viscous component of the action for depth-averaged ice flow is
@@ -242,8 +278,12 @@ def tunable_depth_averaged_viscosity(**kwargs):
     u, h, A, mod_A, is_floating = itemgetter("velocity", "thickness", "fluidity", "mod_A", "is_floating")(kwargs)
     ε_min = kwargs.get("strain_rate_min", firedrake.Constant(strain_rate_min))
     n = kwargs.get("flow_law_exponent", 3.0)
-    ε_e = effective_strain_rate(u, ε_min=ε_min)
+    ε_e = effective_strain_rate(velocity=u, thickness=h, surface=kwargs.get("surface"), strain_rate_min=ε_min)
     return 2 * n / (n + 1) * h * (firedrake.exp(is_floating * mod_A * A_SCALE) * A) ** (-1 / n) * ε_e ** (1 / n + 1)
+
+
+def tunable_depth_averaged_viscosity(**kwargs):
+    return tunable_viscosity(**kwargs)
 
 
 def depth_averaged_viscosity(**kwargs):

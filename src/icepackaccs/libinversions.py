@@ -27,6 +27,13 @@ def _flush_all_output():
 def capture_rank0_output(log_path=None, line_callback=None):
     """Log and print only rank 0 output while suppressing other ranks.
 
+    Usage:
+    with capture_rank0_output(log_fn, record_rol_progress):
+        do something (usually estimator.solve())
+    The log_fn will store stdout (only written off by rank 0) and stderr (written off by all ranks).
+    The line_callback will be called on each line of output from rank 0. For example, cature the loss function.
+    Both are optional.
+
     Written by Codex since this is non-scientific code and confusing to write,
     tested by David Lilien on 5/29/2026."""
     comm = firedrake.COMM_WORLD

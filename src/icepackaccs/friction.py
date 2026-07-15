@@ -13,6 +13,7 @@ import firedrake
 from firedrake import max_value, min_value, sqrt, inner
 from icepack.constants import ice_density as ρ_I, water_density as ρ_W, gravity as g
 from icepack.models.friction import itemgetter
+from icepackaccs.reprojection import extract_bed
 
 
 def friction_stress(u, C, m=3):
@@ -175,14 +176,47 @@ def get_weertman(m=3.0):
     return weertman
 
 
+def _is_extruded(function):
+    mesh = function.ufl_domain()
+    base_mesh = getattr(mesh, "_base_mesh", None)
+    if base_mesh is None:
+        return False
+    try:
+        mesh_dim = mesh.topological_dimension
+        base_dim = base_mesh.topological_dimension
+        if callable(mesh_dim):
+            mesh_dim = mesh_dim()
+        if callable(base_dim):
+            base_dim = base_dim()
+        return mesh_dim > base_dim
+    except AttributeError:
+        return True
+
+
 def c1_to_c3(C1, u):
     U = firedrake.sqrt(firedrake.dot(u, u))
+    if _is_extruded(u):
+        Q2D = firedrake.FunctionSpace(u.ufl_domain()._base_mesh, "CG", 2)
+        C3 = firedrake.Function(C1.function_space())
+        C3_bed = firedrake.Function(Q2D).interpolate(firedrake.sqrt(extract_bed(C1) ** 2.0 / abs(extract_bed(U)) ** (1.0 / 3.0 - 1.0)))
+        C3.dat.data[:] = C3_bed.dat.data[:]
+        return C3
+
     C3 = firedrake.Function(C1.function_space()).interpolate(firedrake.sqrt(C1**2.0 / abs(U) ** (1.0 / 3.0 - 1.0)))
     return C3
 
 
 def c3_to_beta(C3, u, u0):
     U = firedrake.sqrt(firedrake.dot(u, u))
+    if _is_extruded(u):
+        Q2D = firedrake.FunctionSpace(u.ufl_domain()._base_mesh, "CG", 2)
+        beta = firedrake.Function(firedrake.FunctionSpace(u.ufl_domain(), "CG", 2, vfamily="R", vdegree=0))
+        beta_bed = firedrake.Function(Q2D).interpolate(
+            firedrake.sqrt(extract_bed(C3) ** 2.0 * (extract_bed(U) ** (1.0 / 3.0 + 1) + u0 ** (1.0 / 3.0 + 1)) ** (1.0 / (3.0 + 1.0)))
+        )
+        beta.dat.data[:] = beta_bed.dat.data[:]
+        return beta
+
     beta = firedrake.Function(firedrake.FunctionSpace(C3.ufl_domain(), "CG", 2)).interpolate(
         firedrake.sqrt(C3**2.0 * (U ** (1.0 / 3.0 + 1) + u0 ** (1.0 / 3.0 + 1)) ** (1.0 / (3.0 + 1.0)))
     )
@@ -190,8 +224,15 @@ def c3_to_beta(C3, u, u0):
 
 
 def c3_to_c1(C3, u, minslide=0.0):
-    C1 = firedrake.Function(C3.function_space())
     U = firedrake.max_value(firedrake.sqrt(firedrake.dot(u, u)), minslide)
+    if _is_extruded(u):
+        Q2D = firedrake.FunctionSpace(u.ufl_domain()._base_mesh, "CG", 2)
+        C1 = firedrake.Function(C3.function_space())
+        C1_bed = firedrake.Function(Q2D).interpolate(firedrake.sqrt(extract_bed(C3) ** 2.0 * abs(extract_bed(U)) ** (1.0 / 3.0 - 1.0)))
+        C1.dat.data[:] = C1_bed.dat.data[:]
+        return C1
+
+    C1 = firedrake.Function(C3.function_space())
     C1.interpolate(firedrake.sqrt(C3**2.0 * abs(U) ** (1.0 / 3.0 - 1.0)))
     return C1
 
