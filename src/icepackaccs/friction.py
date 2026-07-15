@@ -199,7 +199,7 @@ def c1_to_c3(C1, u):
         Q2D = firedrake.FunctionSpace(u.ufl_domain()._base_mesh, "CG", 2)
         C3 = firedrake.Function(C1.function_space())
         C3_bed = firedrake.Function(Q2D).interpolate(firedrake.sqrt(extract_bed(C1) ** 2.0 / abs(extract_bed(U)) ** (1.0 / 3.0 - 1.0)))
-        C3.dat.data[:] = C3_bed.dat.data[:]
+        C3.dat.data_wo[:] = C3_bed.dat.data_ro[:]
         return C3
 
     C3 = firedrake.Function(C1.function_space()).interpolate(firedrake.sqrt(C1**2.0 / abs(U) ** (1.0 / 3.0 - 1.0)))
@@ -214,7 +214,7 @@ def c3_to_beta(C3, u, u0):
         beta_bed = firedrake.Function(Q2D).interpolate(
             firedrake.sqrt(extract_bed(C3) ** 2.0 * (extract_bed(U) ** (1.0 / 3.0 + 1) + u0 ** (1.0 / 3.0 + 1)) ** (1.0 / (3.0 + 1.0)))
         )
-        beta.dat.data[:] = beta_bed.dat.data[:]
+        beta.dat.data_wo[:] = beta_bed.dat.data_ro[:]
         return beta
 
     beta = firedrake.Function(firedrake.FunctionSpace(C3.ufl_domain(), "CG", 2)).interpolate(
@@ -229,7 +229,7 @@ def c3_to_c1(C3, u, minslide=0.0):
         Q2D = firedrake.FunctionSpace(u.ufl_domain()._base_mesh, "CG", 2)
         C1 = firedrake.Function(C3.function_space())
         C1_bed = firedrake.Function(Q2D).interpolate(firedrake.sqrt(extract_bed(C3) ** 2.0 * abs(extract_bed(U)) ** (1.0 / 3.0 - 1.0)))
-        C1.dat.data[:] = C1_bed.dat.data[:]
+        C1.dat.data_wo[:] = C1_bed.dat.data_ro[:]
         return C1
 
     C1 = firedrake.Function(C3.function_space())

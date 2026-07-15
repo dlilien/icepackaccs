@@ -40,9 +40,9 @@ def extract_surface(q_in):
     Q_x = firedrake.FunctionSpace(mesh_x, element_x)
     q_x = firedrake.Function(Q_x)
     if len(shape) > 0:
-        q_x.dat.data[:] = q_targ.dat.data[1::2, :]
+        q_x.dat.data_wo[:] = q_targ.dat.data_ro[1::2, :]
     else:
-        q_x.dat.data[:] = q_targ.dat.data[1::2]
+        q_x.dat.data_wo[:] = q_targ.dat.data_ro[1::2]
     return q_x
 
 
@@ -72,9 +72,9 @@ def extract_bed(q_in):
     Q_x = firedrake.FunctionSpace(mesh_x, element_x)
     q_x = firedrake.Function(Q_x)
     if len(shape) > 0:
-        q_x.dat.data[:] = q_targ.dat.data[::2, :]
+        q_x.dat.data_wo[:] = q_targ.dat.data_ro[::2, :]
     else:
-        q_x.dat.data[:] = q_targ.dat.data[::2]
+        q_x.dat.data_wo[:] = q_targ.dat.data_ro[::2]
     return q_x
 
 
@@ -93,5 +93,5 @@ def interpolate2d3d(u, mesh):
     element = u.ufl_element()
     V = firedrake.FunctionSpace(mesh, family=element.family(), degree=element.degree(), vfamily="R", vdegree=0)
     u3 = firedrake.Function(V)
-    u3.dat.data[:] = u.dat.data_ro[:]
+    u3.dat.data_wo[:] = u.dat.data_ro[:]
     return u3
